@@ -10,8 +10,29 @@ services:
     # volumes:
     #   - ./redis.conf:/usr/local/etc/redis/redis.conf
 
-  tombola-servers:
+  game-servers:
     image: "game-server:latest"
     hostname: game-servers
+    depends_on:
+      - redis
     ports:
       - 3000-3008:3000-3008
+
+  haproxy:
+    image: haproxy:latest
+    depends_on:
+      - game-servers
+      - redis
+    volumes:
+      - ./haproxy:/usr/local/etc/haproxy
+      # - ./haproxy/certs:/etc/haproxy/certs
+    ports:
+      - "80:80"
+      - "443:443"
+    # networks:
+    #   - frontend
+    #   - default
+
+# networks:
+#   frontend:
+#     external: true

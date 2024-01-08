@@ -8,7 +8,7 @@ import { MyRoom } from "./rooms/MyRoom";
 import gameRouter from "./routes";
 
 const INSTANCE = Number(process.env.NODE_APP_INSTANCE) || 0;
-const PORT = ((Number(process.env.PORT)) + INSTANCE) || 3000;
+const PORT = ((Number(process.env.PORT)) + INSTANCE) || 2567;
 
 const USE_REDIS = (process.env.USE_REDIS === "true") || false;
 const USE_DOMAIN = (process.env.USE_DOMAIN === "true") || false;
@@ -23,7 +23,7 @@ const publicAddress = `${SUB_DOMAIN_BASE}${INSTANCE + 1}.${BASE_URL}`;
 
 const serverOptions: ServerOptions = {
     transport: new WebSocketTransport({ server }),
-    // publicAddress: publicAddress
+    publicAddress: publicAddress
 }
 
 if (USE_REDIS) {
