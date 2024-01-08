@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  redis:
+    image: 'redis:alpine'
+    hostname: redis
+    ports:
+      - 6379:6379
+    
+    # volumes:
+    #   - ./redis.conf:/usr/local/etc/redis/redis.conf
+
+  tombola-servers:
+    image: "game-server:latest"
+    hostname: game-servers
+    ports:
+      - 3000-3008:3000-3008

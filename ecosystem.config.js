@@ -1,23 +1,19 @@
+// ecosystem.config.js
 const os = require('os');
-
-/**
- * COLYSEUS CLOUD WARNING:
- * ----------------------
- * PLEASE DO NOT UPDATE THIS FILE MANUALLY AS IT MAY CAUSE DEPLOYMENT ISSUES
- */
-
 module.exports = {
-  apps : [{
-    name: "colyseus-app",
-    script: 'build/index.js',
-    time: true,
-    watch: false,
-    instances: os.cpus().length,
-    exec_mode: 'fork',
-    wait_ready: true,
-    env_production: {
-      NODE_ENV: 'production'
-    }
-  }],
-};
-
+    apps: [{
+        port        : 3000,
+        name        : "game-server",
+        script      : "build/index.js", // your entrypoint file
+        instances   : os.cpus().length,
+        exec_mode   : 'fork',         // IMPORTANT: do not use cluster mode.
+        env: {
+            DEBUG: "colyseus:errors",
+            NODE_ENV: "production",
+            USE_REDIS: true,
+            USE_DOMAIN: true,
+            BASE_URL: "example.com",
+            SUB_DOMAIN_BASE: "game-server-"
+        }
+    }]
+}
