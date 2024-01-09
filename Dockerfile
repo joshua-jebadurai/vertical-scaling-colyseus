@@ -9,5 +9,5 @@ WORKDIR /app
 RUN npm i -g pm2
 RUN npm install --loglevel verbose
 RUN npm run build
-EXPOSE 3000-3008
+EXPOSE 3000-3007
 CMD ["pm2-runtime", "ecosystem.config.js", "--only", "game-server"]

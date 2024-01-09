@@ -1,29 +1,96 @@
-# Welcome to Colyseus!
 
-This project has been created using [⚔️ `create-colyseus-app`](https://github.com/colyseus/create-colyseus-app/) - an npm init template for kick starting a Colyseus project in TypeScript.
+## Vertical Scaling Strategy
+#### Docker Compose + HAProxy + PM2 + Redis + [Colyseus](https://colyseus.io)
 
-[Documentation](http://docs.colyseus.io/)
+This project was aimed for staging and test scalability on a single machine with multiple cores. The objective is to avoid setting up VMs with all these tools.
 
-## :crossed_swords: Usage
+Look at [Colyseus Scalability](https://docs.colyseus.io/scalability/).
+For production, [Colyseus Cloud](https://cloud-prod.colyseus.io) is highly recommended.
 
+#### Usage
+##### Requirements
+
+- Public domain (*.example.com)
+- VMs (Linux and Mac)
+
+
+##### Setting up server and DNS
+- Create a VM/Server, [install docker](https://docs.docker.com/engine/install/) and docker compose plugin.
+- Make sure port 80/443 is open on firewall.
+- Update domain's DNS manager, create an A record (preferable wildcard sub-domain) that's pointing to the server's public IP address. (*.example.com) -> ipaddress
+
+##### Modifying files
+
+- `ecosystem.config.js`: change the `BASE_URL` to your domain name (example.com), also the `SUB_DOMAIN_BASE` to the game server prefix (game-server-). Game server domains will look like (game-server-1.example.com, game-server-2.example.com).
+
+- `haproxy/haproxy.cfg`: based on how many cores the server, add `acl` entries and map them to `backend`. Number of cores = number of subdomains.
 ```
-npm start
+frontend http
+  bind *:80
+  mode http
+  acl host_gameserver_1 hdr(host) -i game-server-1.example.com
+  acl host_gameserver_2 hdr(host) -i game-server-2.example.com
+  use_backend game_server_1 if host_gameserver_1
+  use_backend game_server_2 if host_gameserver_2
+
+backend game_server_1
+  mode http
+  balance roundrobin
+  server game_server_1 game-servers:3000 check
+
+backend game_server_2
+  mode http
+  balance roundrobin
+  server game_server_2 game-servers:3001 check
+```
+- `docker-compose.yml`: by default, ports 3000-3008 are exposed, modify them based on how many cores the server has.
+```
+  game-servers:
+    image: "game-server:latest"
+    hostname: game-servers
+    depends_on:
+      - redis
+    ports:
+      - 3000-3007:3000-3007
 ```
 
-## Structure
+- `DockerFile`: by default, ports 3000-3008 are exposed, modify them based on how many cores the server has. `EXPOSE 3000-3007`
 
-- `index.ts`: main entry point, register an empty room handler and attach [`@colyseus/monitor`](https://github.com/colyseus/colyseus-monitor)
-- `src/rooms/MyRoom.ts`: an empty room handler for you to implement your logic
-- `src/rooms/schema/MyRoomState.ts`: an empty schema used on your room's state.
-- `loadtest/example.ts`: scriptable client for the loadtest tool (see `npm run loadtest`)
-- `package.json`:
-    - `scripts`:
-        - `npm start`: runs `ts-node-dev index.ts`
-        - `npm test`: runs mocha test suite
-        - `npm run loadtest`: runs the [`@colyseus/loadtest`](https://github.com/colyseus/colyseus-loadtest/) tool for testing the connection, using the `loadtest/example.ts` script.
-- `tsconfig.json`: TypeScript configuration file
+##### Deploying
 
+Run the included shell file to deploy vertical scaled build.
+`./docker-build.sh`
 
-## License
+##### SSL
+Using load-balancer and pointing A records to that ip-address is the recommended way.
 
-MIT
+Optionally, modify the `haproxy/haproxy.cfg` to redirect all 80 port traffic to 443 port
+```
+frontend http
+  bind *:80
+  mode http
+  redirect scheme https if !{ ssl_fc }
+
+frontend https
+  bind *:443 ssl crt /etc/haproxy/certs/cert.pem
+  mode http
+  acl host_gameserver_1 hdr(host) -i game-server-1.example.com
+  acl host_gameserver_2 hdr(host) -i game-server-2.example.com
+  use_backend game_server_1 if host_gameserver_1
+  use_backend game_server_2 if host_gameserver_2
+```
+
+Modify the `docker-compose.yml`, and add the certificates in `/haproxy/certs/`
+```
+  haproxy:
+    image: haproxy:latest
+    depends_on:
+      - game-servers
+      - redis
+    volumes:
+      - ./haproxy:/usr/local/etc/haproxy
+      - ./haproxy/certs:/etc/haproxy/certs
+    ports:
+      - "80:80"
+      - "443:443"
+```

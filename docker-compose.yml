@@ -16,7 +16,7 @@ services:
     depends_on:
       - redis
     ports:
-      - 3000-3008:3000-3008
+      - 3000-3007:3000-3007
 
   haproxy:
     image: haproxy:latest
