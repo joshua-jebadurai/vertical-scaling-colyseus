@@ -5,6 +5,7 @@
 This project was aimed for staging and test scalability on a single machine with multiple cores. The objective is to avoid setting up VMs with all these tools.
 
 Look at [Colyseus Scalability](https://docs.colyseus.io/scalability/).
+
 For production, [Colyseus Cloud](https://cloud-prod.colyseus.io) is highly recommended.
 
 #### Usage
@@ -23,7 +24,7 @@ For production, [Colyseus Cloud](https://cloud-prod.colyseus.io) is highly recom
 
 - `ecosystem.config.js`: change the `BASE_URL` to your domain name (example.com), also the `SUB_DOMAIN_BASE` to the game server prefix (game-server-). Game server domains will look like (game-server-1.example.com, game-server-2.example.com).
 
-- `haproxy/haproxy.cfg`: based on how many cores the server, add `acl` entries and map them to `backend`. Number of cores = number of subdomains.
+- `haproxy/haproxy.cfg`: based on how many cores the server has, add `acl` entries and map them to `backend`. Number of cores = number of subdomains.
 ```
 frontend http
   bind *:80
